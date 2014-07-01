@@ -5,7 +5,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lecture_feu");
     TraitementFeu tf;
-    ros::Rate loop_rate(5);
+    ros::Rate loop_rate(4);
     while (tf.ok()) 
     {
         ros::spinOnce();

@@ -8,6 +8,10 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <sys/time.h>
+#include <sstream>
+
+#include "std_msgs/String.h"
 
 /*==========  Namespaces  ==========*/
 namespace enc = sensor_msgs::image_encodings;
@@ -25,24 +29,38 @@ static const char trackbarWindowName_g[] = "Green";
 #define HSV_MIN 0
 #define HSV_MAX 255
 
+/*==========  Types  ==========*/
+typedef struct 
+{
+    int state;
+    long long int timeSinceLastChange;
+    long long int timeSincePrecChange;
+    int computedState;
+}Feu;
+
 /*=========================================
 =            Class Declaration            =
 =========================================*/
 
-
 class TraitementFeu
 {
 private:
+    // ROS
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
     image_transport::Subscriber image_sub_;
-    image_transport::Publisher image_pub_;
+    ros::Publisher publisher_;
   
+    // OpenCV    
+    cv::Mat _origin, _hsv, _bgr, _red, _orange, _green, _result;
+
+    // Traitement
+    Feu _lightRed, _lightOrange, _lightGreen;
+
 public:
     TraitementFeu();
     ~TraitementFeu();
     void imageCb(const sensor_msgs::ImageConstPtr& msg);
-    void segmentation();
     void traitement();
     bool ok();
 };

@@ -63,25 +63,35 @@
 TraitementFeu::TraitementFeu()
   : it_(nh_)
 {
-    image_pub_ = it_.advertise("test_out", 1);
+    // Ros topics
+    publisher_ = nh_.advertise<std_msgs::String>("result_traitement_feu", 1);
     image_sub_ = it_.subscribe("image_raw", 1, &TraitementFeu::imageCb, this);
 
-    createTrackbars();
-    // cv::namedWindow(WINDOW);
+    // Feu
+    _lightRed.state = _lightRed.computedState = 0;
+    _lightRed.timeSinceLastChange = _lightRed.timeSincePrecChange = 0;
+    _lightOrange.state = _lightOrange.computedState = 0;
+    _lightOrange.timeSinceLastChange = _lightOrange.timeSincePrecChange = 0;
+    _lightGreen.state = _lightGreen.computedState = 0;
+    _lightGreen.timeSinceLastChange = _lightGreen.timeSincePrecChange = 0;
+
+    // Windows
+    // createTrackbars();
+    // // cv::namedWindow(WINDOW);
     cv::namedWindow("Origin");
-    // cv::namedWindow("BGR");
-    // cv::namedWindow("Result");
-    cv::namedWindow("Red");
-    cv::namedWindow("Orange");
-    cv::namedWindow("Green");
+    // // cv::namedWindow("BGR");
+    // // cv::namedWindow("Result");
+    // cv::namedWindow("Red");
+    // cv::namedWindow("Orange");
+    // cv::namedWindow("Green");
 
-    cv::resizeWindow("Red",320,240*3-86);
-    cv::resizeWindow("Orange",320,240*3-86);
-    cv::resizeWindow("Green",320,240*3-86);
+    // cv::resizeWindow("Red",320,240*3-86);
+    // cv::resizeWindow("Orange",320,240*3-86);
+    // cv::resizeWindow("Green",320,240*3-86);
 
-    cv::moveWindow("Red",0,0);
-    cv::moveWindow("Orange",320,0);
-    cv::moveWindow("Green",320*2,0);
+    // cv::moveWindow("Red",0,0);
+    // cv::moveWindow("Orange",320,0);
+    // cv::moveWindow("Green",320*2,0);
 }
 
 TraitementFeu::~TraitementFeu()
@@ -98,7 +108,8 @@ TraitementFeu::~TraitementFeu()
 void TraitementFeu::imageCb(const sensor_msgs::ImageConstPtr& msg)
 {
 // Environment
-    cv::Mat origin, hsv, bgr, red, orange, green, result;
+    std_msgs::String str_msg;
+    std::stringstream ss;
 
 // Algo
     // Get image
@@ -112,78 +123,167 @@ void TraitementFeu::imageCb(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    cv_ptr->image.copyTo(origin);
-    cv_ptr->image.copyTo(bgr);
-    cv_ptr->image.copyTo(hsv);
+    cv_ptr->image.copyTo(_origin);
 
-    // Convert
-    cv::cvtColor(origin,hsv,CV_RGB2HSV);
-    cv::cvtColor(origin,bgr,CV_RGB2BGR);
+    traitement();
 
-    origin.copyTo(red);
-    origin.copyTo(green);
-    origin.copyTo(orange);
-    origin.copyTo(result);
-
-    // Threshold
-    cv::inRange(hsv,cv::Scalar(H_MIN_red,S_MIN_red,V_MIN_red),cv::Scalar(H_MAX_red,S_MAX_red,V_MAX_red),red); 
-    morphOps(red);
-    cv::inRange(hsv,cv::Scalar(H_MIN_green,S_MIN_green,V_MIN_green),cv::Scalar(H_MAX_green,S_MAX_green,V_MAX_green),green);
-    morphOps(green);
-    cv::inRange(hsv,cv::Scalar(H_MIN_orange,S_MIN_orange,V_MIN_orange),cv::Scalar(H_MAX_orange,S_MAX_orange,V_MAX_orange),orange);
-    morphOps(orange);
-
-    // Threshold Result
-    cv::Mat res_red, res_orange, res_green;
-    cv::Mat in_red[] = {red, red, red};
-    cv::Mat in_orange[] = {orange, orange, orange};
-    cv::Mat in_green[] = {green, green, green};
-    cv::merge(in_red, 3, res_red);
-    cv::merge(in_orange, 3, res_orange);
-    cv::merge(in_green, 3, res_green);
-    cv::bitwise_and(bgr, res_red, res_red);
-    cv::bitwise_and(bgr, res_orange, res_orange);
-    cv::bitwise_and(bgr, res_green, res_green);
-
-    // Luminance
-    int mean_value_r, mean_value_o, mean_value_g;
-
-    mean_value_r = cv::sum(res_red)[2]/cv::countNonZero(red);
-    cv::putText(res_red,"Mean : "+intToString(mean_value_r)
-        +((mean_value_r>V_SEUIL_red)?"  !! ON !!":"  ...  ...")
-        ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
-    mean_value_o = cv::sum(res_orange)[2]/cv::countNonZero(orange);
-    cv::putText(res_orange,"Mean : "+intToString(mean_value_o)
-        +((mean_value_o>V_SEUIL_orange)?"  !! ON !!":"  ...  ...")
-        ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
-    mean_value_g = cv::sum(res_green)[2]/cv::countNonZero(green);
-    cv::putText(res_green,"Mean : "+intToString(mean_value_g)
-        +((mean_value_g>V_SEUIL_green)?"  !! ON !!":"  ...  ...")
-        ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
-
-    // Show
-    // cv::imshow(WINDOW,cv_ptr->image);
-    cv::imshow("Origin", bgr);
-    // cv::imshow("BGR", bgr);
-    cv::imshow("Red", res_red);
-    cv::imshow("Orange", res_orange);
-    cv::imshow("Green", res_green);
-    // cv::imshow("Result", result);
-    cv::waitKey(3);
-    
-    cv_ptr->image = result;
-    image_pub_.publish(cv_ptr->toImageMsg());
-
-}
-
-void TraitementFeu::segmentation()
-{
+    ss << "Result : "<< _lightGreen.computedState << _lightOrange.computedState << _lightRed.computedState;
+    str_msg.data = ss.str();
+    publisher_.publish(str_msg);
 
 }
 
 void TraitementFeu::traitement()
 {
+// Environment
+    // Base
+    _origin.copyTo(_bgr);
+    _origin.copyTo(_hsv);
 
+    // Convert
+    cv::cvtColor(_origin,_hsv,CV_RGB2HSV);
+    cv::cvtColor(_origin,_bgr,CV_RGB2BGR);
+
+    // Utils
+    _origin.copyTo(_red);
+    _origin.copyTo(_green);
+    _origin.copyTo(_orange);
+    _origin.copyTo(_result);
+
+    // Time
+    // struct timeval {
+    //    time_t      tv_sec;     /* seconds */
+    //    suseconds_t tv_usec;    /* microseconds */
+    // };
+    struct timeval tv;
+
+// Algo
+    // Threshold
+    cv::inRange(_hsv,cv::Scalar(H_MIN_red,S_MIN_red,V_MIN_red),cv::Scalar(H_MAX_red,S_MAX_red,V_MAX_red),_red); 
+    morphOps(_red);
+    cv::inRange(_hsv,cv::Scalar(H_MIN_green,S_MIN_green,V_MIN_green),cv::Scalar(H_MAX_green,S_MAX_green,V_MAX_green),_green);
+    morphOps(_green);
+    cv::inRange(_hsv,cv::Scalar(H_MIN_orange,S_MIN_orange,V_MIN_orange),cv::Scalar(H_MAX_orange,S_MAX_orange,V_MAX_orange),_orange);
+    morphOps(_orange);
+
+    // Threshold Result
+    cv::Mat res_red, res_orange, res_green;
+    cv::Mat in_red[] = {_red, _red, _red};
+    cv::Mat in_orange[] = {_orange, _orange, _orange};
+    cv::Mat in_green[] = {_green, _green, _green};
+    cv::merge(in_red, 3, res_red);
+    cv::merge(in_orange, 3, res_orange);
+    cv::merge(in_green, 3, res_green);
+    cv::bitwise_and(_bgr, res_red, res_red);
+    cv::bitwise_and(_bgr, res_orange, res_orange);
+    cv::bitwise_and(_bgr, res_green, res_green);
+
+    // Luminance
+    int mean_value_r, mean_value_o, mean_value_g;
+
+    mean_value_r = cv::sum(res_red)[2]/cv::countNonZero(_red);
+    cv::putText(res_red,"Mean : "+intToString(mean_value_r)
+        +((mean_value_r>V_SEUIL_red)?"  !! ON !!":"  ...  ...")
+        ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
+    mean_value_o = cv::sum(res_orange)[2]/cv::countNonZero(_orange);
+    cv::putText(res_orange,"Mean : "+intToString(mean_value_o)
+        +((mean_value_o>V_SEUIL_orange)?"  !! ON !!":"  ...  ...")
+        ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
+    mean_value_g = cv::sum(res_green)[2]/cv::countNonZero(_green);
+    cv::putText(res_green,"Mean : "+intToString(mean_value_g)
+        +((mean_value_g>V_SEUIL_green)?"  !! ON !!":"  ...  ...")
+        ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
+
+    // Process state
+    gettimeofday(&tv,NULL);
+    long long int actualTime_ms = tv.tv_sec*1000+tv.tv_usec/1000;
+    #define PERIOD_MEDIAN   500
+    #define TIME_TOLERANCE_MS  100
+    #define RATIO_MEDIAN    2
+    #define RATIO_TOLERANCE 0.1
+    if(_lightRed.state != (mean_value_r>V_SEUIL_red) || (actualTime_ms - _lightRed.timeSinceLastChange > PERIOD_MEDIAN*2))
+    {
+    // Store new state
+        _lightRed.state = (mean_value_r>V_SEUIL_red);
+    // Compute state
+        long long int period = actualTime_ms - _lightRed.timeSincePrecChange;
+        float ratio = (float)period / (actualTime_ms - _lightRed.timeSinceLastChange);
+        if( period > (PERIOD_MEDIAN - TIME_TOLERANCE_MS) 
+            && period < (PERIOD_MEDIAN + TIME_TOLERANCE_MS)
+            && ratio > (RATIO_MEDIAN - RATIO_TOLERANCE)
+            && ratio < (RATIO_MEDIAN + RATIO_TOLERANCE))
+        {
+            _lightRed.computedState = 2;
+        }
+        else
+        {
+            _lightRed.computedState = _lightRed.state;
+        }
+    // Save time
+        _lightRed.timeSincePrecChange = _lightRed.timeSinceLastChange;
+        _lightRed.timeSinceLastChange = actualTime_ms;
+    }
+    if(_lightOrange.state != (mean_value_o>V_SEUIL_orange) || (actualTime_ms - _lightOrange.timeSinceLastChange > PERIOD_MEDIAN*2))
+    {    
+    // Store new state
+        _lightOrange.state = (mean_value_o>V_SEUIL_orange);
+    // Compute state
+        long long int period = actualTime_ms - _lightOrange.timeSincePrecChange;
+        float ratio = (float)period / (actualTime_ms - _lightOrange.timeSinceLastChange);
+        if( period > (PERIOD_MEDIAN - TIME_TOLERANCE_MS) 
+            && period < (PERIOD_MEDIAN + TIME_TOLERANCE_MS)
+            && ratio > (RATIO_MEDIAN - RATIO_TOLERANCE)
+            && ratio < (RATIO_MEDIAN + RATIO_TOLERANCE))
+        {
+            _lightOrange.computedState = 2;
+        }
+        else
+        {
+            _lightOrange.computedState = _lightOrange.state;
+        }
+    // Save time
+        _lightOrange.timeSincePrecChange = _lightOrange.timeSinceLastChange;
+        _lightOrange.timeSinceLastChange = actualTime_ms;
+    }
+    if(_lightGreen.state != (mean_value_g>V_SEUIL_green) || (actualTime_ms - _lightGreen.timeSinceLastChange > PERIOD_MEDIAN*2))
+    {
+    // Store new state
+        _lightGreen.state = (mean_value_g>V_SEUIL_green);
+    // Compute state
+        long long int period = actualTime_ms - _lightGreen.timeSincePrecChange;
+        float ratio = (float)period / (actualTime_ms - _lightGreen.timeSinceLastChange);
+        if( period > (PERIOD_MEDIAN - TIME_TOLERANCE_MS) 
+            && period < (PERIOD_MEDIAN + TIME_TOLERANCE_MS)
+            && ratio > (RATIO_MEDIAN - RATIO_TOLERANCE)
+            && ratio < (RATIO_MEDIAN + RATIO_TOLERANCE))
+        {
+            _lightGreen.computedState = 2;
+        }
+        else
+        {
+            _lightGreen.computedState = _lightGreen.state;
+        }
+    // Save time
+        _lightGreen.timeSincePrecChange = _lightGreen.timeSinceLastChange;
+        _lightGreen.timeSinceLastChange = actualTime_ms;
+    }
+
+    // Compute state
+
+    // Show
+    // // cv::imshow(WINDOW,cv_ptr->image);
+    cv::imshow("Origin", _bgr);
+    // // cv::imshow("BGR", _bgr);
+    // cv::imshow("Red", res_red);
+    // cv::imshow("Orange", res_orange);
+    // cv::imshow("Green", res_green);
+    // // cv::imshow("Result", _result);
+    cv::waitKey(3);
+
+
+    
+    // cv_ptr->image = _result;
+    // publisher_.publish(cv_ptr->toImageMsg());
 }
 
 bool TraitementFeu::ok()
