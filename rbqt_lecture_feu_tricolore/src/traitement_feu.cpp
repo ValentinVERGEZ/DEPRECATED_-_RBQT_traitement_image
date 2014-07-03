@@ -64,8 +64,8 @@ TraitementFeu::TraitementFeu()
   : it_(nh_)
 {
     // Ros topics
-    publisher_ = nh_.advertise<std_msgs::String>("result_traitement_feu", 1);
-    image_sub_ = it_.subscribe("image_raw", 1, &TraitementFeu::imageCb, this);
+    publisher_ = nh_.advertise<rbqt_lecture_feu_tricolore::LightSignal>("/rbqt_lecture_feu_tricolore/result", 1000);
+    image_sub_ = it_.subscribe("/image_raw", 1, &TraitementFeu::imageCb, this);
 
     // Feu
     _lightRed.state = _lightRed.computedState = 0;
@@ -129,7 +129,17 @@ void TraitementFeu::imageCb(const sensor_msgs::ImageConstPtr& msg)
 
     ss << "Result : "<< _lightGreen.computedState << _lightOrange.computedState << _lightRed.computedState;
     str_msg.data = ss.str();
-    publisher_.publish(str_msg);
+
+
+    rbqt_lecture_feu_tricolore::LightSignal signal;
+    rbqt_lecture_feu_tricolore::LightSpec light;
+    light.color = light.RED;light.state = _lightRed.computedState;
+    signal.lights.push_back(light);
+    light.color = light.YELLOW;light.state = _lightOrange.computedState;
+    signal.lights.push_back(light);
+    light.color = light.GREEN;light.state = _lightGreen.computedState;
+    signal.lights.push_back(light);
+    publisher_.publish(signal);
 
 }
 

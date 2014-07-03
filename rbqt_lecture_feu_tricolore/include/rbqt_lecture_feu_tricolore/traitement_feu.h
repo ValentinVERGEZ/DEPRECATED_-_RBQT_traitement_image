@@ -11,6 +11,8 @@
 #include <sys/time.h>
 #include <sstream>
 
+#include "rbqt_lecture_feu_tricolore/LightSpec.h"
+#include "rbqt_lecture_feu_tricolore/LightSignal.h"
 #include "std_msgs/String.h"
 
 /*==========  Namespaces  ==========*/
