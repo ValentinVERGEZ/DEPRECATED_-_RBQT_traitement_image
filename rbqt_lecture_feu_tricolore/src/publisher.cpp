@@ -36,9 +36,10 @@ int main(int argc, char** argv)
     image_transport::Publisher pub = it.advertise("image_raw", 1);
 
     // Images
-    cv_bridge::CvImage cv_im_1[27];
-    cv_bridge::CvImage cv_im_2[27];
-    for(int i = 0; i < 27; i++)
+    #define NB_IMAGE_MAX       39
+    cv_bridge::CvImage cv_im_1[NB_IMAGE_MAX];
+    cv_bridge::CvImage cv_im_2[NB_IMAGE_MAX];
+    for(int i = 0; i < NB_IMAGE_MAX; i++)
     {
         switch(i)
         {
@@ -176,6 +177,51 @@ int main(int argc, char** argv)
                 cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/screen_robotino/000.jpg", 1) ;
                 cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/screen_robotino/111.jpg", 1) ;
             break;
+            
+            case 30:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0000.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0000.jpg", 1) ;
+            break;
+            
+            case 31:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0001.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0001.jpg", 1) ;
+            break;
+            
+            case 32:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0002.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0002.jpg", 1) ;
+            break;
+            
+            case 33:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0003.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0003.jpg", 1) ;
+            break;
+            
+            case 34:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0004.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0004.jpg", 1) ;
+            break;
+            
+            case 35:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0005.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0005.jpg", 1) ;
+            break;
+            
+            case 36:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0006.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0006.jpg", 1) ;
+            break;
+            
+            case 37:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0007.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0007.jpg", 1) ;
+            break;
+            
+            case 38:
+                cv_im_1[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0008.jpg", 1) ;
+                cv_im_2[i].image = cv::imread("/home/leak/Projets/ros-pkg/rbqt_traitement_image/rbqt_lecture_feu_tricolore/img/frame0008.jpg", 1) ;
+            break;
         }
         cv_im_1[i].encoding = sensor_msgs::image_encodings::BGR8;        
         cv_im_2[i].encoding = sensor_msgs::image_encodings::BGR8;      
@@ -208,25 +254,51 @@ int main(int argc, char** argv)
 }
 
 
+// void *thread_entree_utilisateur(void* unused)
+// {
+//     int code_rouge=0, code_orange=1, code_vert=2;
+//     choice = code_vert*9+code_orange*3+code_rouge;
+//     while(1)
+//     {
+//         std::cout << "Choix actuel : " << (code_vert*100+code_orange*10+code_rouge) << " | nouveau choix -> " << std::endl;    
+//         std::cin >> choice;
+
+//         code_rouge = choice %10;
+//         code_orange = (choice/10)%10;
+//         code_vert = (choice/100)%10;
+
+//         code_rouge = ((code_rouge<0)?0:((code_rouge>2)?2:code_rouge));
+//         code_orange = ((code_orange<0)?0:((code_orange>2)?2:code_orange));
+//         code_vert = ((code_vert<0)?0:((code_vert>2)?2:code_vert));
+
+//         choice = code_vert*9+code_orange*3+code_rouge;
+
+//     }
+
+//     return 0;
+// }
+
 void *thread_entree_utilisateur(void* unused)
 {
     int code_rouge=0, code_orange=1, code_vert=2;
     choice = code_vert*9+code_orange*3+code_rouge;
     while(1)
     {
-        std::cout << "Choix actuel : " << (code_vert*100+code_orange*10+code_rouge) << " | nouveau choix -> " << std::endl;    
+        std::cout << "Choix actuel : " << (code_vert*100+code_orange*10+code_rouge) << " - " << choice << " | nouveau choix -> " << std::endl;    
         std::cin >> choice;
 
         code_rouge = choice %10;
         code_orange = (choice/10)%10;
         code_vert = (choice/100)%10;
 
-        code_rouge = ((code_rouge<0)?0:((code_rouge>2)?2:code_rouge));
-        code_orange = ((code_orange<0)?0:((code_orange>2)?2:code_orange));
-        code_vert = ((code_vert<0)?0:((code_vert>2)?2:code_vert));
+        // code_rouge = ((code_rouge<0)?0:((code_rouge>2)?2:code_rouge));
+        // code_orange = ((code_orange<0)?0:((code_orange>2)?2:code_orange));
+        // code_vert = ((code_vert<0)?0:((code_vert>2)?2:code_vert));
 
-        choice = code_vert*9+code_orange*3+code_rouge;
-
+        if(code_orange != 3)
+            choice = code_vert*9+code_orange*3+code_rouge;        
+        if(choice > 26 && choice < 30 || choice > NB_IMAGE_MAX-1)
+            choice = 0;      
     }
 
     return 0;

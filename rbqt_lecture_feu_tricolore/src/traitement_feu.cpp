@@ -27,7 +27,35 @@
 //     int V_MIN_orange = HSV_MIN;
 //     int V_MAX_orange = HSV_MAX;
 
-// STANDARD VALUES
+// // STANDARD VALUES
+// // Red
+//     int H_MIN_red = 173;
+//     int H_MAX_red = 179;
+//     int S_MIN_red = 114;
+//     int S_MAX_red = HSV_MAX;
+//     int V_MIN_red = HSV_MIN;
+//     int V_MAX_red = HSV_MAX;
+//     int V_SEUIL_red = 150;
+
+// // Green
+//     int H_MIN_green = 78;
+//     int H_MAX_green = 93;
+//     int S_MIN_green = 115;
+//     int S_MAX_green = HSV_MAX;
+//     int V_MIN_green = HSV_MIN;
+//     int V_MAX_green = HSV_MAX;
+//     int V_SEUIL_green = 25;
+
+// // Orange
+//     int H_MIN_orange = 0;
+//     int H_MAX_orange = 12;
+//     int S_MIN_orange = 150;
+//     int S_MAX_orange = HSV_MAX;
+//     int V_MIN_orange = HSV_MIN;
+//     int V_MAX_orange = HSV_MAX;
+//     int V_SEUIL_orange = 173;
+
+// ROBOCUP 2014 JOAO PESSOA VALUES
 // Red
     int H_MIN_red = 173;
     int H_MAX_red = 179;
@@ -38,22 +66,22 @@
     int V_SEUIL_red = 150;
 
 // Green
-    int H_MIN_green = 78;
-    int H_MAX_green = 93;
-    int S_MIN_green = 115;
-    int S_MAX_green = HSV_MAX;
+    int H_MIN_green = 40;
+    int H_MAX_green = 82;
+    int S_MIN_green = 75;
+    int S_MAX_green = 185;
     int V_MIN_green = HSV_MIN;
     int V_MAX_green = HSV_MAX;
-    int V_SEUIL_green = 25;
+    int V_SEUIL_green = 60;
 
 // Orange
-    int H_MIN_orange = 0;
-    int H_MAX_orange = 12;
-    int S_MIN_orange = 150;
-    int S_MAX_orange = HSV_MAX;
+    int H_MIN_orange = 15;
+    int H_MAX_orange = 29;
+    int S_MIN_orange = 120;
+    int S_MAX_orange = 243;
     int V_MIN_orange = HSV_MIN;
     int V_MAX_orange = HSV_MAX;
-    int V_SEUIL_orange = 173;
+    int V_SEUIL_orange = 191;
 
 /*========================================
 =            Class Definition            =
@@ -76,14 +104,14 @@ TraitementFeu::TraitementFeu()
     _lightGreen.timeSinceLastChange = _lightGreen.timeSincePrecChange = 0;
 
     // Windows
-    // createTrackbars();
+    createTrackbars();
     // // cv::namedWindow(WINDOW);
     cv::namedWindow("Origin");
     // // cv::namedWindow("BGR");
     // // cv::namedWindow("Result");
-    // cv::namedWindow("Red");
-    // cv::namedWindow("Orange");
-    // cv::namedWindow("Green");
+    cv::namedWindow("Red");
+    cv::namedWindow("Orange");
+    cv::namedWindow("Green");
 
     // cv::resizeWindow("Red",320,240*3-86);
     // cv::resizeWindow("Orange",320,240*3-86);
@@ -192,14 +220,20 @@ void TraitementFeu::traitement()
     int mean_value_r, mean_value_o, mean_value_g;
 
     mean_value_r = cv::sum(res_red)[2]/cv::countNonZero(_red);
+    if(cv::countNonZero(_red) < 3)
+        mean_value_r = 0;
     cv::putText(res_red,"Mean : "+intToString(mean_value_r)
         +((mean_value_r>V_SEUIL_red)?"  !! ON !!":"  ...  ...")
         ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
     mean_value_o = cv::sum(res_orange)[2]/cv::countNonZero(_orange);
+    if(cv::countNonZero(_orange) < 3)
+        mean_value_o = 0;
     cv::putText(res_orange,"Mean : "+intToString(mean_value_o)
         +((mean_value_o>V_SEUIL_orange)?"  !! ON !!":"  ...  ...")
         ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
     mean_value_g = cv::sum(res_green)[2]/cv::countNonZero(_green);
+    if(cv::countNonZero(_green) < 3)
+        mean_value_g = 0;
     cv::putText(res_green,"Mean : "+intToString(mean_value_g)
         +((mean_value_g>V_SEUIL_green)?"  !! ON !!":"  ...  ...")
         ,cv::Point(0,20),1,2,cv::Scalar(255,255,255),2);
@@ -284,9 +318,9 @@ void TraitementFeu::traitement()
     // // cv::imshow(WINDOW,cv_ptr->image);
     cv::imshow("Origin", _bgr);
     // // cv::imshow("BGR", _bgr);
-    // cv::imshow("Red", res_red);
-    // cv::imshow("Orange", res_orange);
-    // cv::imshow("Green", res_green);
+    cv::imshow("Red", res_red);
+    cv::imshow("Orange", res_orange);
+    cv::imshow("Green", res_green);
     // // cv::imshow("Result", _result);
     cv::waitKey(3);
 
@@ -361,9 +395,14 @@ void morphOps(cv::Mat &mask){ //en paramètre le flux à traiter
     }
 
 
-    cv::Mat erodeElement2 = getStructuringElement(cv::MORPH_RECT,cv::Size(25,25));
+    // cv::Mat erodeElement2 = getStructuringElement(cv::MORPH_RECT,cv::Size(25,25));
+    // //dilate with larger element so make sure object is nicely visible
+    // cv::Mat dilateElement2 = getStructuringElement(cv::MORPH_RECT,cv::Size(25,25)); //ancien 3.3
+
+
+    cv::Mat erodeElement2 = getStructuringElement(cv::MORPH_RECT,cv::Size(19,19));
     //dilate with larger element so make sure object is nicely visible
-    cv::Mat dilateElement2 = getStructuringElement(cv::MORPH_RECT,cv::Size(25,25)); //ancien 3.3
+    cv::Mat dilateElement2 = getStructuringElement(cv::MORPH_RECT,cv::Size(19,19)); //ancien 3.3
 
     // Fermeture pour luminositée
     for(int k=0;k<100;k++){
